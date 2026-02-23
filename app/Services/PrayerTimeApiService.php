@@ -20,9 +20,10 @@ class PrayerTimeApiService
     }
 
     /**
-     * Fetch prayer times from the API and upsert into the database.
+     * Fetch ALL prayer times for a regency from the API (all pages),
+     * delete existing records for that regency, and insert fresh data.
      *
-     * @return array{inserted: int, updated: int}
+     * @return array{synced: int}
      *
      * @throws ConnectionException
      * @throws \RuntimeException
@@ -32,37 +33,49 @@ class PrayerTimeApiService
         ?string $startDate = null,
         ?string $endDate = null,
     ): array {
-        $response = Http::withHeader('x-api-co-id', $this->apiKey)
-            ->timeout(30)
-            ->get("{$this->baseUrl}/regional/indonesia/prayer-times", array_filter([
-                'regency_code' => $regencyCode,
-                'start_date' => $startDate,
-                'end_date' => $endDate,
-            ]));
+        $allItems = [];
+        $page = 1;
 
-        $json = $response->json();
+        do {
+            $response = Http::withHeader('x-api-co-id', $this->apiKey)
+                ->timeout(30)
+                ->get("{$this->baseUrl}/regional/indonesia/prayer-times", array_filter([
+                    'regency_code' => $regencyCode,
+                    'start_date' => $startDate,
+                    'end_date' => $endDate,
+                    'page' => $page,
+                ]));
 
-        if ($response->failed() || ! ($json['is_success'] ?? false)) {
-            Log::error('PrayerTimeApiService: API request failed', [
-                'status' => $response->status(),
-                'body' => $response->body(),
-            ]);
+            $json = $response->json();
 
-            throw new \RuntimeException(
-                "API request failed with status {$response->status()}: {$response->body()}"
-            );
+            if ($response->failed() || ! ($json['is_success'] ?? false)) {
+                Log::error('PrayerTimeApiService: API request failed', [
+                    'status' => $response->status(),
+                    'body' => $response->body(),
+                ]);
+
+                throw new \RuntimeException(
+                    "API request failed with status {$response->status()}: {$response->body()}"
+                );
+            }
+
+            $allItems = array_merge($allItems, data_get($json, 'data', []));
+
+            $totalPages = data_get($json, 'paging.total_page', 1);
+            $page++;
+        } while ($page <= $totalPages);
+
+        if (empty($allItems)) {
+            return ['synced' => 0];
         }
 
-        $items = data_get($json, 'data', []);
+        // Hapus semua data lama, ganti dengan data sinkronisasi baru
+        PrayerTime::query()->truncate();
 
-        if (empty($items)) {
-            return ['inserted' => 0, 'updated' => 0];
-        }
+        $now = now();
 
-        $countBefore = PrayerTime::query()->count();
-
-        PrayerTime::query()->upsert(
-            array_map(fn (array $item) => [
+        PrayerTime::query()->insert(
+            array_map(fn(array $item) => [
                 'regency_code' => $item['regency_code'],
                 'regency_name' => $item['regency_name'],
                 'gmt' => $item['gmt'],
@@ -78,22 +91,16 @@ class PrayerTimeApiService
                 'ashr' => $item['ashr'],
                 'maghrib' => $item['maghrib'],
                 'isya' => $item['isya'],
-            ], $items),
-            uniqueBy: ['regency_code', 'date'],
-            update: ['imsyak', 'shubuh', 'terbit', 'dhuha', 'dzuhur', 'ashr', 'maghrib', 'isya', 'updated_at']
+                'created_at' => $now,
+                'updated_at' => $now,
+            ], $allItems)
         );
 
-        $countAfter = PrayerTime::query()->count();
-
-        $inserted = max(0, $countAfter - $countBefore);
-        $updated = count($items) - $inserted;
-
         Log::info('PrayerTimeApiService: Sync complete', [
-            'total' => count($items),
-            'inserted' => $inserted,
-            'updated' => $updated,
+            'regency_code' => $regencyCode,
+            'synced' => count($allItems),
         ]);
 
-        return ['inserted' => $inserted, 'updated' => $updated];
+        return ['synced' => count($allItems)];
     }
 }

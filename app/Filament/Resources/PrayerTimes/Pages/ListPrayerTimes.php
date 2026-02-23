@@ -33,10 +33,7 @@ class ListPrayerTimes extends ListRecords
 
                         Notification::make()
                             ->title('Sinkronisasi Berhasil')
-                            ->body(
-                                "{$result['inserted']} data baru ditambahkan, "
-                                    ."{$result['updated']} data diperbarui."
-                            )
+                            ->body("{$result['synced']} data jadwal sholat berhasil disinkronisasi.")
                             ->icon(Heroicon::OutlinedCheckCircle)
                             ->success()
                             ->duration(6000)
