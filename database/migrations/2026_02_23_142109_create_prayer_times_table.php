@@ -30,8 +30,8 @@ return new class extends Migration
             $table->string('isya', 5);
             $table->timestamps();
 
-            $table->index(['regency_code', 'date']);
             $table->index(['year', 'month']);
+            $table->unique(['regency_code', 'date']);
         });
     }
 
