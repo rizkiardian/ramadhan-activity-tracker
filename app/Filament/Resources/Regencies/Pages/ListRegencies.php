@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Regencies\Pages;
 
+use App\Enums\SyncCategory;
 use App\Filament\Resources\Regencies\RegencyResource;
 use App\Models\SyncLog;
 use App\Services\PrayerTimeApiService;
@@ -41,6 +42,7 @@ class ListRegencies extends ListRecords
 
                         SyncLog::query()->create([
                             'sync_type' => 'regencies',
+                            'sync_category' => SyncCategory::Regency,
                             'start_date' => now()->toDateString(),
                             'end_date' => now()->toDateString(),
                             'sync_time' => $syncedAt,
@@ -59,6 +61,7 @@ class ListRegencies extends ListRecords
                     } catch (ConnectionException $e) {
                         SyncLog::query()->create([
                             'sync_type' => 'regencies',
+                            'sync_category' => SyncCategory::Regency,
                             'start_date' => now()->toDateString(),
                             'end_date' => now()->toDateString(),
                             'sync_time' => $syncedAt,
@@ -77,6 +80,7 @@ class ListRegencies extends ListRecords
                     } catch (\RuntimeException $e) {
                         SyncLog::query()->create([
                             'sync_type' => 'regencies',
+                            'sync_category' => SyncCategory::Regency,
                             'start_date' => now()->toDateString(),
                             'end_date' => now()->toDateString(),
                             'sync_time' => $syncedAt,

@@ -2,9 +2,10 @@
 
 namespace App\Filament\Resources\PrayerTimes\Tables;
 
+use App\Models\PrayerTime;
+use App\Models\RamadhanPeriod;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
-use Filament\Actions\EditAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
@@ -15,11 +16,6 @@ class PrayerTimesTable
     {
         return $table
             ->columns([
-                TextColumn::make('regency_code')
-                    ->label('Kode')
-                    ->searchable()
-                    ->sortable()
-                    ->copyable(),
                 TextColumn::make('regency_name')
                     ->label('Kabupaten/Kota')
                     ->searchable()
@@ -29,6 +25,28 @@ class PrayerTimesTable
                     ->label('Tanggal')
                     ->date('d M Y')
                     ->sortable(),
+                TextColumn::make('ramadhan_day')
+                    ->label('Hari Ramadhan Ke-')
+                    ->getStateUsing(function (PrayerTime $record): string {
+                        $period = RamadhanPeriod::query()
+                            ->forYear($record->year)
+                            ->whereNull('deleted_at')
+                            ->first();
+
+                        if (! $period) {
+                            return '-';
+                        }
+
+                        $day = $period->start_date->diffInDays($record->date) + 1;
+
+                        if ($day < 1 || $day > 30) {
+                            return '-';
+                        }
+
+                        return "Hari ke-{$day}";
+                    })
+                    ->badge()
+                    ->color('warning'),
                 TextColumn::make('imsyak')
                     ->label('Imsyak')
                     ->toggleable(),
@@ -48,48 +66,49 @@ class PrayerTimesTable
                     ->label('Ashr')
                     ->toggleable(),
                 TextColumn::make('maghrib')
-                    ->label('Maghrib')
+                    ->label('Maghrib / Buka Puasa')
                     ->toggleable(),
                 TextColumn::make('isya')
                     ->label('Isya')
                     ->toggleable(),
+                TextColumn::make('regency_code')
+                    ->label('Kode')
+                    ->searchable()
+                    ->sortable()
+                    ->copyable()
+                    ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                SelectFilter::make('month')
-                    ->label('Bulan')
-                    ->options([
-                        1 => 'Januari',
-                        2 => 'Februari',
-                        3 => 'Maret',
-                        4 => 'April',
-                        5 => 'Mei',
-                        6 => 'Juni',
-                        7 => 'Juli',
-                        8 => 'Agustus',
-                        9 => 'September',
-                        10 => 'Oktober',
-                        11 => 'November',
-                        12 => 'Desember',
-                    ]),
                 SelectFilter::make('year')
                     ->label('Tahun')
                     ->options(
-                        fn (): array => \App\Models\PrayerTime::query()
+                        fn(): array => PrayerTime::query()
                             ->distinct()
-                            ->orderBy('year')
+                            ->orderBy('year', 'desc')
                             ->pluck('year', 'year')
                             ->toArray()
                     ),
+                SelectFilter::make('regency_code')
+                    ->label('Kabupaten/Kota')
+                    ->options(
+                        fn(): array => PrayerTime::query()
+                            ->distinct()
+                            ->orderBy('regency_name')
+                            ->pluck('regency_name', 'regency_code')
+                            ->toArray()
+                    )
+                    ->searchable(),
             ])
             ->defaultSort('date')
             ->striped()
-            ->recordActions([
-                EditAction::make(),
-            ])
             ->toolbarActions([
                 BulkActionGroup::make([
                     DeleteBulkAction::make(),
                 ]),
-            ]);
+            ])
+            ->emptyStateIcon('heroicon-o-clock')
+            ->emptyStateHeading('Belum Ada Data Jadwal Sholat')
+            ->emptyStateDescription('Gunakan tombol "Sinkronisasi Jadwal Sholat" untuk mengambil data dari API.')
+            ->emptyStateActions([]);
     }
 }

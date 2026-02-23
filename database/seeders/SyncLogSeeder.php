@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Enums\SyncCategory;
 use App\Models\SyncLog;
 use App\Models\User;
 use Illuminate\Database\Seeder;
@@ -16,21 +17,23 @@ class SyncLogSeeder extends Seeder
 
         $logs = [
             [
-                'sync_type' => 'prayer_times',
-                'start_date' => '2026-03-01',
-                'end_date' => '2026-03-31',
-                'sync_time' => '2026-03-01 01:00:00',
+                'sync_type' => 'regencies',
+                'sync_category' => SyncCategory::Regency,
+                'start_date' => '2026-02-18',
+                'end_date' => '2026-02-18',
+                'sync_time' => '2026-02-18 00:30:00',
                 'status' => 'Success',
-                'notes' => null,
+                'notes' => '514 regencies synced.',
                 'synced_by' => $admin->id,
             ],
             [
                 'sync_type' => 'prayer_times',
-                'start_date' => '2026-03-01',
-                'end_date' => '2026-03-31',
-                'sync_time' => '2026-03-02 01:00:00',
+                'sync_category' => SyncCategory::PrayerTime,
+                'start_date' => '2026-02-18',
+                'end_date' => '2026-03-19',
+                'sync_time' => '2026-02-18 01:00:00',
                 'status' => 'Success',
-                'notes' => null,
+                'notes' => '30 records synced for regency 3171 (Ramadhan 2026).',
                 'synced_by' => $admin->id,
             ],
         ];
@@ -39,6 +42,6 @@ class SyncLogSeeder extends Seeder
             SyncLog::factory()->create($log);
         }
 
-        $this->command?->info('Seeded '.count($logs).' sync logs.');
+        $this->command?->info('Seeded ' . count($logs) . ' sync logs.');
     }
 }

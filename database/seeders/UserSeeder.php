@@ -9,22 +9,22 @@ class UserSeeder extends Seeder
 {
     public function run(): void
     {
-        User::factory()->create([
+        User::updateOrCreate(['email' => 'admin@example.com'], [
             'name' => 'Admin User',
             'gender' => 'Male',
-            'email' => 'admin@example.com',
+            'password' => bcrypt('password'),
         ]);
 
-        User::factory()->create([
+        User::updateOrCreate(['email' => 'siti@example.com'], [
             'name' => 'Siti Rahmawati',
             'gender' => 'Female',
-            'email' => 'siti@example.com',
+            'password' => bcrypt('password'),
         ]);
 
-        User::factory()->create([
+        User::updateOrCreate(['email' => 'budi@example.com'], [
             'name' => 'Budi Santoso',
             'gender' => 'Male',
-            'email' => 'budi@example.com',
+            'password' => bcrypt('password'),
         ]);
     }
 }

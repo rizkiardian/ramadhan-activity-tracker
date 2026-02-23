@@ -5,8 +5,11 @@ namespace App\Filament\Resources\UserActivities\Tables;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
+use Filament\Actions\ForceDeleteBulkAction;
+use Filament\Actions\RestoreBulkAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
 
 class UserActivitiesTable
@@ -34,7 +37,8 @@ class UserActivitiesTable
                     ->time('H:i'),
                 TextColumn::make('end_time')
                     ->label('Selesai')
-                    ->time('H:i'),
+                    ->time('H:i')
+                    ->placeholder('-'),
                 TextColumn::make('status')
                     ->label('Status')
                     ->badge()
@@ -48,11 +52,13 @@ class UserActivitiesTable
                         'Done' => 'Selesai',
                         'Skipped' => 'Dilewati',
                         default => $state,
-                    }),
+                    })
+                    ->sortable(),
                 TextColumn::make('notes')
                     ->label('Catatan')
                     ->limit(40)
-                    ->toggleable(isToggledHiddenByDefault: true),
+                    ->toggleable(isToggledHiddenByDefault: true)
+                    ->placeholder('-'),
             ])
             ->defaultSort('date', 'desc')
             ->filters([
@@ -65,15 +71,28 @@ class UserActivitiesTable
                     ]),
                 SelectFilter::make('activity_type_id')
                     ->label('Jenis Aktivitas')
-                    ->relationship('activityType', 'name'),
+                    ->relationship('activityType', 'name')
+                    ->searchable()
+                    ->preload(),
+                SelectFilter::make('user_id')
+                    ->label('Pengguna')
+                    ->relationship('user', 'name')
+                    ->searchable()
+                    ->preload(),
+                TrashedFilter::make(),
             ])
-            ->actions([
+            ->recordActions([
                 EditAction::make(),
             ])
-            ->bulkActions([
+            ->toolbarActions([
                 BulkActionGroup::make([
                     DeleteBulkAction::make(),
+                    ForceDeleteBulkAction::make(),
+                    RestoreBulkAction::make(),
                 ]),
-            ]);
+            ])
+            ->emptyStateIcon('heroicon-o-clipboard-document-list')
+            ->emptyStateHeading('Belum Ada Aktivitas')
+            ->emptyStateDescription('Mulai tambahkan aktivitas harian Ramadhan Anda.');
     }
 }

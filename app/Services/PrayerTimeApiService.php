@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\PrayerTime;
+use App\Models\RamadhanPeriod;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -20,8 +21,45 @@ class PrayerTimeApiService
     }
 
     /**
-     * Fetch ALL prayer times for a regency from the API (all pages),
-     * delete existing records for that regency, and insert fresh data.
+     * Fetch prayer times for a regency covering the Ramadhan period of a given year.
+     * Deletes existing records for that regency+year and inserts fresh data.
+     *
+     * @return array{synced: int, year: int, regency_code: string, start_date: string, end_date: string}
+     *
+     * @throws ConnectionException
+     * @throws \RuntimeException
+     */
+    public function fetchAndStoreForRamadhan(
+        int $year,
+        string $regencyCode,
+    ): array {
+        $period = RamadhanPeriod::query()
+            ->forYear($year)
+            ->whereNull('deleted_at')
+            ->first();
+
+        if (! $period) {
+            throw new \RuntimeException(
+                "Periode Ramadhan untuk tahun {$year} tidak ditemukan. Tambahkan data periode terlebih dahulu."
+            );
+        }
+
+        $startDate = $period->start_date->toDateString();
+        $endDate = $period->end_date->toDateString();
+
+        $result = $this->fetchAndStore($regencyCode, $startDate, $endDate);
+
+        return array_merge($result, [
+            'year' => $year,
+            'regency_code' => $regencyCode,
+            'start_date' => $startDate,
+            'end_date' => $endDate,
+        ]);
+    }
+
+    /**
+     * Fetch ALL prayer times for a regency within a date range from the API,
+     * delete existing records for that regency+date range, and insert fresh data.
      *
      * @return array{synced: int}
      *
@@ -29,7 +67,7 @@ class PrayerTimeApiService
      * @throws \RuntimeException
      */
     public function fetchAndStore(
-        string $regencyCode = '3171', // 3171 = Jakarta Selatan; see /regional/indonesia/prayer-times/regencies
+        string $regencyCode = '3171',
         ?string $startDate = null,
         ?string $endDate = null,
     ): array {
@@ -69,13 +107,20 @@ class PrayerTimeApiService
             return ['synced' => 0];
         }
 
-        // Hapus semua data lama, ganti dengan data sinkronisasi baru
-        PrayerTime::query()->truncate();
+        // Hapus data lama untuk regency + tanggal yang sama
+        if ($startDate && $endDate) {
+            PrayerTime::query()
+                ->where('regency_code', $regencyCode)
+                ->whereBetween('date', [$startDate, $endDate])
+                ->delete();
+        } else {
+            PrayerTime::query()->where('regency_code', $regencyCode)->delete();
+        }
 
         $now = now();
 
         PrayerTime::query()->insert(
-            array_map(fn (array $item) => [
+            array_map(fn(array $item) => [
                 'regency_code' => $item['regency_code'],
                 'regency_name' => $item['regency_name'],
                 'gmt' => $item['gmt'],
@@ -137,7 +182,7 @@ class PrayerTimeApiService
                 );
             }
 
-            $items = array_map(fn (array $item) => [
+            $items = array_map(fn(array $item) => [
                 'code' => $item['code'],
                 'name' => $item['name'],
             ], data_get($json, 'data', []));

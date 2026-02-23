@@ -4,7 +4,6 @@ namespace App\Filament\Resources\Regencies\Tables;
 
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
-use Filament\Actions\EditAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 
@@ -30,17 +29,23 @@ class RegenciesTable
                     ->counts('prayerTimes')
                     ->sortable()
                     ->badge()
-                    ->color('info'),
+                    ->color(fn(int $state): string => $state > 0 ? 'success' : 'gray'),
+                TextColumn::make('last_synced_at')
+                    ->label('Sinkronisasi Terakhir')
+                    ->dateTime('d M Y H:i')
+                    ->sortable()
+                    ->placeholder('Belum pernah')
+                    ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->defaultSort('code')
             ->recordAction(null)
-            ->actions([
-                EditAction::make(),
-            ])
-            ->bulkActions([
+            ->toolbarActions([
                 BulkActionGroup::make([
                     DeleteBulkAction::make(),
                 ]),
-            ]);
+            ])
+            ->emptyStateIcon('heroicon-o-map-pin')
+            ->emptyStateHeading('Belum Ada Data Kabupaten/Kota')
+            ->emptyStateDescription('Gunakan tombol "Sinkronisasi API" untuk mengambil data kota dari API.');
     }
 }

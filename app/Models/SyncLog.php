@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\SyncCategory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -14,6 +15,7 @@ class SyncLog extends Model
 
     protected $fillable = [
         'sync_type',
+        'sync_category',
         'start_date',
         'end_date',
         'sync_time',
@@ -28,6 +30,7 @@ class SyncLog extends Model
             'start_date' => 'date',
             'end_date' => 'date',
             'sync_time' => 'datetime',
+            'sync_category' => SyncCategory::class,
         ];
     }
 

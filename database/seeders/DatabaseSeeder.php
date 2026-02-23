@@ -13,6 +13,7 @@ class DatabaseSeeder extends Seeder
     {
         $this->call([
             UserSeeder::class,
+            RamadhanPeriodSeeder::class,
             RegencySeeder::class,
             ActivityTypeSeeder::class,
             PrayerTimeSeeder::class,
