@@ -10,6 +10,9 @@
     "license": "MIT",
     "require": {
         "php": "^8.2",
+        "bezhansalleh/filament-shield": "^4.1",
+        "filament/filament": "^5.2",
+        "filament/forms": "^5.2",
         "laravel/framework": "^12.0",
         "laravel/tinker": "^2.10.1"
     },
@@ -38,16 +41,24 @@
     },
     "scripts": {
         "setup": [
-            "composer install",
-            "@php -r \"file_exists('.env') || copy('.env.example', '.env');\"",
-            "@php artisan key:generate",
-            "@php artisan migrate --force",
-            "npm install",
-            "npm run build"
+            "@php artisan migrate:fresh",
+            "@php artisan db:seed",
+            "@php artisan shield:generate --all --panel=app",
+            "@php artisan shield:super-admin --user=1 --panel=app"
         ],
         "dev": [
             "Composer\\Config::disableProcessTimeout",
             "npx concurrently -c \"#93c5fd,#c4b5fd,#fdba74\" \"php artisan serve\" \"php artisan queue:listen --tries=1\" \"npm run dev\" --names='server,queue,vite'"
+        ],
+        "dev:optimize": [
+            "php artisan optimize",
+            "php artisan filament:optimize"
+        ],
+        "prod:optimize": [
+            "php artisan optimize:clear",
+            "php artisan optimize",
+            "php artisan filament:optimize-clear",
+            "php artisan filament:optimize"
         ],
         "test": [
             "@php artisan config:clear --ansi",
@@ -55,7 +66,8 @@
         ],
         "post-autoload-dump": [
             "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",
-            "@php artisan package:discover --ansi"
+            "@php artisan package:discover --ansi",
+            "@php artisan filament:upgrade"
         ],
         "post-update-cmd": [
             "@php artisan vendor:publish --tag=laravel-assets --ansi --force"
