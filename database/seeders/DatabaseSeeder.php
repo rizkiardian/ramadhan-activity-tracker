@@ -14,7 +14,10 @@ class DatabaseSeeder extends Seeder
         $this->call([
             UserSeeder::class,
             RegencySeeder::class,
+            ActivityTypeSeeder::class,
             PrayerTimeSeeder::class,
+            UserActivitySeeder::class,
+            SyncLogSeeder::class,
         ]);
     }
 }

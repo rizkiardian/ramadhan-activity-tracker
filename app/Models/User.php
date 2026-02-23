@@ -6,6 +6,7 @@ namespace App\Models;
 use BezhanSalleh\FilamentShield\Traits\HasPanelShield;
 use Filament\Models\Contracts\FilamentUser;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Spatie\Permission\Traits\HasRoles;
@@ -22,6 +23,7 @@ class User extends Authenticatable implements FilamentUser
      */
     protected $fillable = [
         'name',
+        'gender',
         'email',
         'password',
     ];
@@ -47,5 +49,20 @@ class User extends Authenticatable implements FilamentUser
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    public function activityTypes(): HasMany
+    {
+        return $this->hasMany(ActivityType::class, 'created_by');
+    }
+
+    public function userActivities(): HasMany
+    {
+        return $this->hasMany(UserActivity::class);
+    }
+
+    public function syncLogs(): HasMany
+    {
+        return $this->hasMany(SyncLog::class, 'synced_by');
     }
 }
