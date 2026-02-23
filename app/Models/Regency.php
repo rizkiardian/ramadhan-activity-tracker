@@ -22,7 +22,15 @@ class Regency extends Model
     protected $fillable = [
         'code',
         'name',
+        'last_synced_at',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'last_synced_at' => 'datetime',
+        ];
+    }
 
     public function prayerTimes(): HasMany
     {

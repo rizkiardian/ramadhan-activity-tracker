@@ -2,8 +2,6 @@
 
 namespace App\Filament\Resources\Regencies;
 
-use App\Filament\Resources\Regencies\Pages\CreateRegency;
-use App\Filament\Resources\Regencies\Pages\EditRegency;
 use App\Filament\Resources\Regencies\Pages\ListRegencies;
 use App\Filament\Resources\Regencies\Schemas\RegencyForm;
 use App\Filament\Resources\Regencies\Tables\RegenciesTable;
@@ -30,6 +28,21 @@ class RegencyResource extends Resource
 
     protected static ?int $navigationSort = 1;
 
+    public static function canCreate(): bool
+    {
+        return false;
+    }
+
+    public static function canEdit($record): bool
+    {
+        return false;
+    }
+
+    public static function canDelete($record): bool
+    {
+        return false;
+    }
+
     public static function form(Schema $schema): Schema
     {
         return RegencyForm::configure($schema);
@@ -49,8 +62,6 @@ class RegencyResource extends Resource
     {
         return [
             'index' => ListRegencies::route('/'),
-            'create' => CreateRegency::route('/create'),
-            'edit' => EditRegency::route('/{record}/edit'),
         ];
     }
 }

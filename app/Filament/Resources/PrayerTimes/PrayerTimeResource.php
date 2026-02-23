@@ -2,8 +2,6 @@
 
 namespace App\Filament\Resources\PrayerTimes;
 
-use App\Filament\Resources\PrayerTimes\Pages\CreatePrayerTime;
-use App\Filament\Resources\PrayerTimes\Pages\EditPrayerTime;
 use App\Filament\Resources\PrayerTimes\Pages\ListPrayerTimes;
 use App\Filament\Resources\PrayerTimes\Schemas\PrayerTimeForm;
 use App\Filament\Resources\PrayerTimes\Tables\PrayerTimesTable;
@@ -28,6 +26,21 @@ class PrayerTimeResource extends Resource
 
     protected static \UnitEnum|string|null $navigationGroup = 'Master Data';
 
+    public static function canCreate(): bool
+    {
+        return false;
+    }
+
+    public static function canEdit($record): bool
+    {
+        return false;
+    }
+
+    public static function canDelete($record): bool
+    {
+        return false;
+    }
+
     public static function form(Schema $schema): Schema
     {
         return PrayerTimeForm::configure($schema);
@@ -49,8 +62,6 @@ class PrayerTimeResource extends Resource
     {
         return [
             'index' => ListPrayerTimes::route('/'),
-            'create' => CreatePrayerTime::route('/create'),
-            'edit' => EditPrayerTime::route('/{record}/edit'),
         ];
     }
 }
