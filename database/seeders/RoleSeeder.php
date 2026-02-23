@@ -2,16 +2,19 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use Spatie\Permission\Models\Role;
 
 class RoleSeeder extends Seeder
 {
     /**
-     * Run the database seeds.
+     * Generate Shield permissions and ensure required roles exist.
      */
     public function run(): void
     {
-        //
+        $this->command->call('shield:generate', ['--all' => true, '--no-interaction' => true]);
+
+        Role::firstOrCreate(['name' => 'super_admin', 'guard_name' => 'web']);
+        Role::firstOrCreate(['name' => 'user', 'guard_name' => 'web']);
     }
 }
