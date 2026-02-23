@@ -75,7 +75,7 @@ class PrayerTimeApiService
         $now = now();
 
         PrayerTime::query()->insert(
-            array_map(fn(array $item) => [
+            array_map(fn (array $item) => [
                 'regency_code' => $item['regency_code'],
                 'regency_name' => $item['regency_name'],
                 'gmt' => $item['gmt'],
@@ -102,5 +102,54 @@ class PrayerTimeApiService
         ]);
 
         return ['synced' => count($allItems)];
+    }
+
+    /**
+     * Fetch all regencies from the API (all pages).
+     *
+     * @return list<array{code: string, name: string}>
+     *
+     * @throws ConnectionException
+     * @throws \RuntimeException
+     */
+    public function fetchAllRegencies(): array
+    {
+        $allItems = [];
+        $page = 1;
+
+        do {
+            $response = Http::withHeader('x-api-co-id', $this->apiKey)
+                ->timeout(30)
+                ->get("{$this->baseUrl}/regional/indonesia/prayer-times/regencies", [
+                    'page' => $page,
+                ]);
+
+            $json = $response->json();
+
+            if ($response->failed() || ! ($json['is_success'] ?? false)) {
+                Log::error('PrayerTimeApiService: Regency API request failed', [
+                    'status' => $response->status(),
+                    'body' => $response->body(),
+                ]);
+
+                throw new \RuntimeException(
+                    "Regency API request failed with status {$response->status()}: {$response->body()}"
+                );
+            }
+
+            $items = array_map(fn (array $item) => [
+                'code' => $item['code'],
+                'name' => $item['name'],
+            ], data_get($json, 'data', []));
+
+            $allItems = array_merge($allItems, $items);
+
+            $totalPages = data_get($json, 'paging.total_page', 1);
+            $page++;
+        } while ($page <= $totalPages);
+
+        Log::info('PrayerTimeApiService: Regencies fetched', ['total' => count($allItems)]);
+
+        return $allItems;
     }
 }

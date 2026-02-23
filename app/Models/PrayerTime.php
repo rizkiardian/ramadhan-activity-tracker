@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class PrayerTime extends Model
 {
@@ -59,5 +60,10 @@ class PrayerTime extends Model
     public function scopeByMonth(\Illuminate\Database\Eloquent\Builder $query, int $year, int $month): \Illuminate\Database\Eloquent\Builder
     {
         return $query->where('year', $year)->where('month', $month);
+    }
+
+    public function regency(): BelongsTo
+    {
+        return $this->belongsTo(Regency::class, 'regency_code', 'code');
     }
 }

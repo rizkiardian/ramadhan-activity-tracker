@@ -3,6 +3,7 @@
 namespace Database\Factories;
 
 use App\Models\PrayerTime;
+use App\Models\Regency;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -21,10 +22,11 @@ class PrayerTimeFactory extends Factory
     public function definition(): array
     {
         $date = Carbon::parse(fake()->dateTimeBetween('2026-03-01', '2026-03-30'));
+        $regency = Regency::factory()->make();
 
         return [
-            'regency_code' => fake()->numerify('####'),
-            'regency_name' => 'KOTA '.strtoupper(fake()->city()),
+            'regency_code' => $regency->code,
+            'regency_name' => $regency->name,
             'gmt' => fake()->randomElement([7, 8, 9]),
             'date' => $date->toDateString(),
             'year' => $date->year,
@@ -39,5 +41,16 @@ class PrayerTimeFactory extends Factory
             'maghrib' => $date->copy()->setTime(18, fake()->numberBetween(10, 20))->format('H:i'),
             'isya' => $date->copy()->setTime(19, fake()->numberBetween(25, 35))->format('H:i'),
         ];
+    }
+
+    /**
+     * Link the prayer time to an existing Regency.
+     */
+    public function forRegency(Regency $regency): static
+    {
+        return $this->state([
+            'regency_code' => $regency->code,
+            'regency_name' => $regency->name,
+        ]);
     }
 }
