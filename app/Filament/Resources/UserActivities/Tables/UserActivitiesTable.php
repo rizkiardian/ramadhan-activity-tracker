@@ -11,6 +11,7 @@ use Filament\Actions\ForceDeleteAction;
 use Filament\Actions\ForceDeleteBulkAction;
 use Filament\Actions\RestoreAction;
 use Filament\Actions\RestoreBulkAction;
+use Filament\Actions\ViewAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TrashedFilter;
@@ -32,6 +33,11 @@ class UserActivitiesTable
                     ->sortable()
                     ->badge()
                     ->color('primary'),
+                TextColumn::make('ramadhan_day')
+                    ->label('Hari Ramadhan')
+                    ->badge()
+                    ->color('success')
+                    ->formatStateUsing(fn($state) => $state ? "Hari ke-{$state}" : '-'),
                 TextColumn::make('date')
                     ->label('Tanggal')
                     ->date('d M Y')
@@ -46,13 +52,13 @@ class UserActivitiesTable
                 TextColumn::make('status')
                     ->label('Status')
                     ->badge()
-                    ->color(fn (string $state): string => match ($state) {
+                    ->color(fn(string $state): string => match ($state) {
                         'Done' => 'success',
                         'Pending' => 'warning',
                         'Skipped' => 'danger',
                         default => 'gray',
                     })
-                    ->formatStateUsing(fn (string $state): string => match ($state) {
+                    ->formatStateUsing(fn(string $state): string => match ($state) {
                         'Done' => 'Selesai',
                         'Skipped' => 'Dilewati',
                         default => $state,
@@ -86,6 +92,7 @@ class UserActivitiesTable
             ])
             ->recordActions([
                 ActionGroup::make([
+                    ViewAction::make(),
                     EditAction::make(),
                     DeleteAction::make(),
                     ForceDeleteAction::make(),
