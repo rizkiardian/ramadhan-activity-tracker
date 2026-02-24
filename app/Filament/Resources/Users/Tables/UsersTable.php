@@ -2,10 +2,18 @@
 
 namespace App\Filament\Resources\Users\Tables;
 
+use Filament\Actions\ActionGroup;
 use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
+use Filament\Actions\ForceDeleteAction;
+use Filament\Actions\ForceDeleteBulkAction;
+use Filament\Actions\RestoreAction;
+use Filament\Actions\RestoreBulkAction;
+use Filament\Actions\ViewAction;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
 
 class UsersTable
@@ -26,12 +34,12 @@ class UsersTable
                 TextColumn::make('gender')
                     ->label('Jenis Kelamin')
                     ->badge()
-                    ->color(fn (string $state): string => match ($state) {
+                    ->color(fn(string $state): string => match ($state) {
                         'Male' => 'info',
-                        'Female' => 'pink',
+                        'Female' => 'danger',
                         default => 'gray',
                     })
-                    ->formatStateUsing(fn (?string $state): string => match ($state) {
+                    ->formatStateUsing(fn(?string $state): string => match ($state) {
                         'Male' => 'Laki-laki',
                         'Female' => 'Perempuan',
                         default => '-',
@@ -46,14 +54,25 @@ class UsersTable
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
-            ->defaultSort('name')
-            ->actions([
-                EditAction::make(),
+            ->filters([
+                TrashedFilter::make(),
             ])
-            ->bulkActions([
+            ->recordActions([
+                ActionGroup::make([
+                    EditAction::make(),
+                    DeleteAction::make(),
+                    ForceDeleteAction::make(),
+                    RestoreAction::make(),
+                ])->tooltip(__('Actions')),
+            ])
+            ->toolbarActions([
                 BulkActionGroup::make([
                     DeleteBulkAction::make(),
+                    ForceDeleteBulkAction::make(),
+                    RestoreBulkAction::make(),
                 ]),
-            ]);
+            ])
+            ->recordUrl(null)
+            ->defaultSort('created_at', 'desc');
     }
 }

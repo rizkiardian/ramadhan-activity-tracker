@@ -26,7 +26,8 @@ class UserForm
                                 'Male' => 'Laki-laki',
                                 'Female' => 'Perempuan',
                             ])
-                            ->native(false),
+                            ->native(false)
+                            ->required(),
                         TextInput::make('email')
                             ->label('Email')
                             ->email()
@@ -37,9 +38,16 @@ class UserForm
                             ->label('Password')
                             ->password()
                             ->revealable()
-                            ->dehydrateStateUsing(fn (string $state) => bcrypt($state))
-                            ->dehydrated(fn (?string $state) => filled($state))
-                            ->required(fn (string $operation) => $operation === 'create'),
+                            ->dehydrateStateUsing(fn(string $state) => bcrypt($state))
+                            ->dehydrated(fn(?string $state) => filled($state))
+                            ->required(fn(string $operation) => $operation === 'create'),
+                        Select::make('roles')
+                            ->label('Role')
+                            ->relationship('roles', 'name')
+                            ->preload()
+                            ->native(false)
+                            ->required()
+                            ->disabled(fn(string $operation) => $operation === 'edit'),
                     ]),
             ]);
     }

@@ -8,4 +8,9 @@ use Filament\Resources\Pages\CreateRecord;
 class CreateRegency extends CreateRecord
 {
     protected static string $resource = RegencyResource::class;
+
+    protected function getRedirectUrl(): string
+    {
+        return $this->getResource()::getUrl('index');
+    }
 }

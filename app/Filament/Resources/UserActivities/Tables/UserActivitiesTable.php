@@ -2,10 +2,14 @@
 
 namespace App\Filament\Resources\UserActivities\Tables;
 
+use Filament\Actions\ActionGroup;
 use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
+use Filament\Actions\ForceDeleteAction;
 use Filament\Actions\ForceDeleteBulkAction;
+use Filament\Actions\RestoreAction;
 use Filament\Actions\RestoreBulkAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
@@ -60,7 +64,6 @@ class UserActivitiesTable
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->placeholder('-'),
             ])
-            ->defaultSort('date', 'desc')
             ->filters([
                 SelectFilter::make('status')
                     ->label('Status')
@@ -82,7 +85,12 @@ class UserActivitiesTable
                 TrashedFilter::make(),
             ])
             ->recordActions([
-                EditAction::make(),
+                ActionGroup::make([
+                    EditAction::make(),
+                    DeleteAction::make(),
+                    ForceDeleteAction::make(),
+                    RestoreAction::make(),
+                ])->tooltip(__('Actions')),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
@@ -91,6 +99,8 @@ class UserActivitiesTable
                     RestoreBulkAction::make(),
                 ]),
             ])
+            ->recordUrl(null)
+            ->defaultSort('created_at', 'desc')
             ->emptyStateIcon('heroicon-o-clipboard-document-list')
             ->emptyStateHeading('Belum Ada Aktivitas')
             ->emptyStateDescription('Mulai tambahkan aktivitas harian Ramadhan Anda.');
