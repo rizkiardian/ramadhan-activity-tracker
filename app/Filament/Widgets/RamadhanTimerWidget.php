@@ -5,12 +5,15 @@ namespace App\Filament\Widgets;
 use App\Models\PrayerTime;
 use App\Models\RamadhanPeriod;
 use App\Models\Regency;
+use BezhanSalleh\FilamentShield\Traits\HasWidgetShield;
 use Carbon\Carbon;
 use Filament\Widgets\Widget;
 use Illuminate\Support\Facades\Auth;
 
 class RamadhanTimerWidget extends Widget
 {
+    use HasWidgetShield;
+
     protected static ?int $sort = 1;
 
     protected string $view = 'filament.widgets.ramadhan-timer-widget';
@@ -93,7 +96,7 @@ class RamadhanTimerWidget extends Widget
                 'isya' => $prayer->isya,
             ];
 
-            $this->maghribTimestamp = Carbon::parse(now()->toDateString().' '.$prayer->maghrib)->timestamp;
+            $this->maghribTimestamp = Carbon::parse(now()->toDateString() . ' ' . $prayer->maghrib)->timestamp;
         }
     }
 }

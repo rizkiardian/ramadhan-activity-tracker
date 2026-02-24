@@ -4,11 +4,14 @@ namespace App\Filament\Widgets;
 
 use App\Models\RamadhanPeriod;
 use App\Models\UserActivity;
+use BezhanSalleh\FilamentShield\Traits\HasWidgetShield;
 use Filament\Widgets\Widget;
 use Illuminate\Support\Facades\Auth;
 
 class ActivityDistributionWidget extends Widget
 {
+    use HasWidgetShield;
+    
     protected static ?int $sort = 3;
 
     protected string $view = 'filament.widgets.activity-distribution-widget';

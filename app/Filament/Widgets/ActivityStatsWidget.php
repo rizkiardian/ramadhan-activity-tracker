@@ -4,12 +4,15 @@ namespace App\Filament\Widgets;
 
 use App\Models\RamadhanPeriod;
 use App\Models\UserActivity;
+use BezhanSalleh\FilamentShield\Traits\HasWidgetShield;
 use Filament\Widgets\StatsOverviewWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
 use Illuminate\Support\Facades\Auth;
 
 class ActivityStatsWidget extends StatsOverviewWidget
 {
+    use HasWidgetShield;
+
     protected static ?int $sort = 2;
 
     protected function getStats(): array
