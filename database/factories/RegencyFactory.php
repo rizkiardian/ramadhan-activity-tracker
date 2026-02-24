@@ -21,6 +21,7 @@ class RegencyFactory extends Factory
         return [
             'code' => fake()->unique()->numerify('####'),
             'name' => $prefix.' '.strtoupper(fake()->city()),
+            'last_synced_at' => now(),
         ];
     }
 }

@@ -6,12 +6,15 @@ use App\Models\PrayerTime;
 use App\Models\Regency;
 use Carbon\Carbon;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
 
 class PrayerTimeSeeder extends Seeder
 {
     public function run(): void
     {
+        DB::statement('SET FOREIGN_KEY_CHECKS=0');
         PrayerTime::query()->truncate();
+        DB::statement('SET FOREIGN_KEY_CHECKS=1');
 
         $regencies = Regency::all();
 

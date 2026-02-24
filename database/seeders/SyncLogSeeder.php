@@ -6,12 +6,15 @@ use App\Enums\SyncCategory;
 use App\Models\SyncLog;
 use App\Models\User;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
 
 class SyncLogSeeder extends Seeder
 {
     public function run(): void
     {
+        DB::statement('SET FOREIGN_KEY_CHECKS=0');
         SyncLog::query()->truncate();
+        DB::statement('SET FOREIGN_KEY_CHECKS=1');
 
         $admin = User::query()->first();
 
@@ -42,6 +45,6 @@ class SyncLogSeeder extends Seeder
             SyncLog::factory()->create($log);
         }
 
-        $this->command?->info('Seeded ' . count($logs) . ' sync logs.');
+        $this->command?->info('Seeded '.count($logs).' sync logs.');
     }
 }

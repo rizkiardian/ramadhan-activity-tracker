@@ -29,7 +29,10 @@ class PrayerTime extends Model
         'ashr',
         'maghrib',
         'isya',
+        'last_synced_at',
     ];
+
+    public $timestamps = false;
 
     protected function casts(): array
     {
@@ -39,6 +42,7 @@ class PrayerTime extends Model
             'month' => 'integer',
             'day' => 'integer',
             'gmt' => 'integer',
+            'last_synced_at' => 'datetime',
         ];
     }
 

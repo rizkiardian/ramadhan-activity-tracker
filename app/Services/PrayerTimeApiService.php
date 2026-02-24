@@ -59,7 +59,7 @@ class PrayerTimeApiService
 
     /**
      * Fetch ALL prayer times for a regency within a date range from the API,
-     * delete existing records for that regency+date range, and insert fresh data.
+     * and upsert (insert or update) the records.
      *
      * @return array{synced: int}
      *
@@ -107,20 +107,10 @@ class PrayerTimeApiService
             return ['synced' => 0];
         }
 
-        // Hapus data lama untuk regency + tanggal yang sama
-        if ($startDate && $endDate) {
-            PrayerTime::query()
-                ->where('regency_code', $regencyCode)
-                ->whereBetween('date', [$startDate, $endDate])
-                ->delete();
-        } else {
-            PrayerTime::query()->where('regency_code', $regencyCode)->delete();
-        }
-
         $now = now();
 
-        PrayerTime::query()->insert(
-            array_map(fn(array $item) => [
+        PrayerTime::query()->upsert(
+            array_map(fn (array $item) => [
                 'regency_code' => $item['regency_code'],
                 'regency_name' => $item['regency_name'],
                 'gmt' => $item['gmt'],
@@ -136,9 +126,10 @@ class PrayerTimeApiService
                 'ashr' => $item['ashr'],
                 'maghrib' => $item['maghrib'],
                 'isya' => $item['isya'],
-                'created_at' => $now,
-                'updated_at' => $now,
-            ], $allItems)
+                'last_synced_at' => $now,
+            ], $allItems),
+            ['regency_code', 'date'],
+            ['regency_name', 'gmt', 'imsyak', 'shubuh', 'terbit', 'dhuha', 'dzuhur', 'ashr', 'maghrib', 'isya', 'last_synced_at']
         );
 
         Log::info('PrayerTimeApiService: Sync complete', [
@@ -182,7 +173,7 @@ class PrayerTimeApiService
                 );
             }
 
-            $items = array_map(fn(array $item) => [
+            $items = array_map(fn (array $item) => [
                 'code' => $item['code'],
                 'name' => $item['name'],
             ], data_get($json, 'data', []));

@@ -29,7 +29,7 @@ class ListRegencies extends ListRecords
                 ->requiresConfirmation()
                 ->modalIcon(Heroicon::OutlinedCloudArrowDown)
                 ->modalHeading('Sinkronisasi Kabupaten/Kota')
-                ->modalDescription('Data kabupaten/kota akan diambil dari API dan menggantikan seluruh data yang ada.')
+                ->modalDescription('Data kabupaten/kota akan diambil dari API. Data yang sudah ada akan diperbarui, data baru akan ditambahkan.')
                 ->modalSubmitActionLabel('Ya, Sinkronisasi Sekarang')
                 ->action(function (PrayerTimeApiService $service): void {
                     $syncedAt = now();
@@ -37,8 +37,15 @@ class ListRegencies extends ListRecords
                     try {
                         $regencies = $service->fetchAllRegencies();
 
-                        DB::table('regencies')->truncate();
-                        DB::table('regencies')->insert($regencies);
+                        DB::table('regencies')->upsert(
+                            array_map(fn(array $r) => [
+                                'code' => $r['code'],
+                                'name' => $r['name'],
+                                'last_synced_at' => $syncedAt,
+                            ], $regencies),
+                            ['code'],
+                            ['name', 'last_synced_at']
+                        );
 
                         SyncLog::query()->create([
                             'sync_type' => 'regencies',
@@ -47,13 +54,13 @@ class ListRegencies extends ListRecords
                             'end_date' => now()->toDateString(),
                             'sync_time' => $syncedAt,
                             'status' => 'Success',
-                            'notes' => count($regencies).' regencies synced.',
+                            'notes' => count($regencies) . ' regencies synced.',
                             'synced_by' => Auth::id(),
                         ]);
 
                         Notification::make()
                             ->title('Sinkronisasi Berhasil')
-                            ->body(count($regencies).' kabupaten/kota berhasil disinkronisasi.')
+                            ->body(count($regencies) . ' kabupaten/kota berhasil disinkronisasi.')
                             ->icon(Heroicon::OutlinedCheckCircle)
                             ->success()
                             ->duration(6000)
@@ -66,7 +73,7 @@ class ListRegencies extends ListRecords
                             'end_date' => now()->toDateString(),
                             'sync_time' => $syncedAt,
                             'status' => 'Failed',
-                            'notes' => 'Connection error: '.$e->getMessage(),
+                            'notes' => 'Connection error: ' . $e->getMessage(),
                             'synced_by' => Auth::id(),
                         ]);
 
@@ -98,8 +105,6 @@ class ListRegencies extends ListRecords
                             ->send();
                     }
                 }),
-
-            CreateAction::make(),
         ];
     }
 }

@@ -40,6 +40,7 @@ class PrayerTimeFactory extends Factory
             'ashr' => $date->copy()->setTime(15, fake()->numberBetween(15, 30))->format('H:i'),
             'maghrib' => $date->copy()->setTime(18, fake()->numberBetween(10, 20))->format('H:i'),
             'isya' => $date->copy()->setTime(19, fake()->numberBetween(25, 35))->format('H:i'),
+            'last_synced_at' => now(),
         ];
     }
 
