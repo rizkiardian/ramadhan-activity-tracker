@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace App\Policies;
 
+use Illuminate\Foundation\Auth\User as AuthUser;
 use App\Models\UserActivity;
 use Illuminate\Auth\Access\HandlesAuthorization;
-use Illuminate\Foundation\Auth\User as AuthUser;
 
 class UserActivityPolicy
 {
     use HandlesAuthorization;
-
+    
     public function viewAny(AuthUser $authUser): bool
     {
         return $authUser->can('ViewAny:UserActivity');
@@ -19,11 +19,7 @@ class UserActivityPolicy
 
     public function view(AuthUser $authUser, UserActivity $userActivity): bool
     {
-        if (! $authUser->can('View:UserActivity')) {
-            return false;
-        }
-
-        return $authUser->hasRole('super_admin') || $userActivity->user_id === $authUser->id;
+        return $authUser->can('View:UserActivity');
     }
 
     public function create(AuthUser $authUser): bool
@@ -33,38 +29,22 @@ class UserActivityPolicy
 
     public function update(AuthUser $authUser, UserActivity $userActivity): bool
     {
-        if (! $authUser->can('Update:UserActivity')) {
-            return false;
-        }
-
-        return $authUser->hasRole('super_admin') || $userActivity->user_id === $authUser->id;
+        return $authUser->can('Update:UserActivity');
     }
 
     public function delete(AuthUser $authUser, UserActivity $userActivity): bool
     {
-        if (! $authUser->can('Delete:UserActivity')) {
-            return false;
-        }
-
-        return $authUser->hasRole('super_admin') || $userActivity->user_id === $authUser->id;
+        return $authUser->can('Delete:UserActivity');
     }
 
     public function restore(AuthUser $authUser, UserActivity $userActivity): bool
     {
-        if (! $authUser->can('Restore:UserActivity')) {
-            return false;
-        }
-
-        return $authUser->hasRole('super_admin') || $userActivity->user_id === $authUser->id;
+        return $authUser->can('Restore:UserActivity');
     }
 
     public function forceDelete(AuthUser $authUser, UserActivity $userActivity): bool
     {
-        if (! $authUser->can('ForceDelete:UserActivity')) {
-            return false;
-        }
-
-        return $authUser->hasRole('super_admin') || $userActivity->user_id === $authUser->id;
+        return $authUser->can('ForceDelete:UserActivity');
     }
 
     public function forceDeleteAny(AuthUser $authUser): bool
@@ -79,15 +59,12 @@ class UserActivityPolicy
 
     public function replicate(AuthUser $authUser, UserActivity $userActivity): bool
     {
-        if (! $authUser->can('Replicate:UserActivity')) {
-            return false;
-        }
-
-        return $authUser->hasRole('super_admin') || $userActivity->user_id === $authUser->id;
+        return $authUser->can('Replicate:UserActivity');
     }
 
     public function reorder(AuthUser $authUser): bool
     {
         return $authUser->can('Reorder:UserActivity');
     }
+
 }

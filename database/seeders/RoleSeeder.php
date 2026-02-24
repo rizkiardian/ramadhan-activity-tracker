@@ -12,7 +12,7 @@ class RoleSeeder extends Seeder
      */
     public function run(): void
     {
-        $this->command->call('shield:generate', ['--all' => true, '--no-interaction' => true]);
+        $this->command->call('shield:generate', ['--all' => true, '--panel' => 'app', '--no-interaction' => true]);
 
         Role::firstOrCreate(['name' => 'super_admin', 'guard_name' => 'web']);
         Role::firstOrCreate(['name' => 'user', 'guard_name' => 'web']);
