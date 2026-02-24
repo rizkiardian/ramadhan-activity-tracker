@@ -1,5 +1,11 @@
 @import url("https://fonts.bunny.net/css?family=instrument-sans:400,500,600,700&display=swap");
 
+@import "../../../../vendor/filament/filament/resources/css/theme.css";
+
+@source '../../../../app/Filament/**/*';
+@source '../../../../resources/views/filament/**/*';
+@source '../../../../vendor/jeffgreco13/filament-breezy/resources/**/*';
+
 :root {
     --font-family-sans:
         "Instrument Sans", ui-sans-serif, system-ui, sans-serif,

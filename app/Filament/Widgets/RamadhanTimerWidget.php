@@ -4,8 +4,10 @@ namespace App\Filament\Widgets;
 
 use App\Models\PrayerTime;
 use App\Models\RamadhanPeriod;
+use App\Models\Regency;
 use Carbon\Carbon;
 use Filament\Widgets\Widget;
+use Illuminate\Support\Facades\Auth;
 
 class RamadhanTimerWidget extends Widget
 {
@@ -23,13 +25,41 @@ class RamadhanTimerWidget extends Widget
 
     public ?int $maghribTimestamp = null;
 
+    public ?string $selectedRegencyCode = null;
+
+    /** @var array<string, string> */
+    public array $regencies = [];
+
     public function mount(): void
     {
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        $this->selectedRegencyCode = $user->regency_code;
+
+        $this->regencies = Regency::query()
+            ->orderBy('name')
+            ->pluck('name', 'code')
+            ->toArray();
+
+        $this->loadPrayerData();
+    }
+
+    public function updatedSelectedRegencyCode(): void
+    {
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        $user->update(['regency_code' => $this->selectedRegencyCode ?: null]);
+
         $this->loadPrayerData();
     }
 
     private function loadPrayerData(): void
     {
+        $this->prayerData = null;
+        $this->maghribTimestamp = null;
+        $this->isRamadhan = false;
+        $this->ramadhanDay = null;
+
         $today = now()->toDateString();
 
         $period = RamadhanPeriod::query()
@@ -43,11 +73,16 @@ class RamadhanTimerWidget extends Widget
         }
 
         $this->isRamadhan = true;
-        $dayNumber = $period->start_date->diffInDays(now()) + 1;
+        $dayNumber = (int) $period->start_date->diffInDays(now()) + 1;
         $this->ramadhanDay = "Hari ke-{$dayNumber}";
+
+        if (! $this->selectedRegencyCode) {
+            return;
+        }
 
         $prayer = PrayerTime::query()
             ->where('date', $today)
+            ->where('regency_code', $this->selectedRegencyCode)
             ->first();
 
         if ($prayer) {
@@ -57,36 +92,8 @@ class RamadhanTimerWidget extends Widget
                 'maghrib' => $prayer->maghrib,
                 'isya' => $prayer->isya,
             ];
-            $this->maghribTimestamp = now()->startOfDay()
-                ->addHours((int) substr($prayer->maghrib, 0, 2))
-                ->addMinutes((int) substr($prayer->maghrib, 3, 2))
-                ->timestamp;
+
+            $this->maghribTimestamp = Carbon::parse(now()->toDateString().' '.$prayer->maghrib)->timestamp;
         }
-    }
-
-    /**
-     * Get countdown info to Iftar (Maghrib) today.
-     *
-     * @return array{label: string, passed: bool}
-     */
-    public function getCountdownToIftar(): array
-    {
-        if (! $this->prayerData) {
-            return ['label' => '--:--:--', 'passed' => false];
-        }
-
-        $now = now();
-        $maghribTime = Carbon::parse(now()->toDateString().' '.$this->prayerData['maghrib']);
-
-        if ($now->greaterThan($maghribTime)) {
-            return ['label' => 'Sudah buka puasa 🌙', 'passed' => true];
-        }
-
-        $diff = $now->diffInSeconds($maghribTime);
-        $hours = (int) floor($diff / 3600);
-        $minutes = (int) floor(($diff % 3600) / 60);
-        $seconds = $diff % 60;
-
-        return ['label' => sprintf('%02d:%02d:%02d', $hours, $minutes, $seconds), 'passed' => false];
     }
 }

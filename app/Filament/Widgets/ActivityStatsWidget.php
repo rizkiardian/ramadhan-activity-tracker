@@ -34,8 +34,8 @@ class ActivityStatsWidget extends StatsOverviewWidget
 
         $startDate = $period->start_date->toDateString();
         $endDate = $period->end_date->toDateString();
-        $totalDays = $period->start_date->diffInDays($period->end_date) + 1;
-        $daysPassed = min($period->start_date->diffInDays(now()) + 1, $totalDays);
+        $totalDays = (int) $period->start_date->diffInDays($period->end_date) + 1;
+        $daysPassed = (int) min((int) $period->start_date->diffInDays(now()) + 1, $totalDays);
 
         $totalActivities = UserActivity::query()
             ->where('user_id', $userId)
@@ -61,8 +61,8 @@ class ActivityStatsWidget extends StatsOverviewWidget
             ->count();
 
         $completionRate = $totalActivities > 0
-          ? round(($doneActivities / $totalActivities) * 100)
-          : 0;
+            ? round(($doneActivities / $totalActivities) * 100)
+            : 0;
 
         return [
             Stat::make('Aktivitas Hari Ini', $todayCount)

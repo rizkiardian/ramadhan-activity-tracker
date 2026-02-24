@@ -6,6 +6,7 @@ namespace App\Models;
 use BezhanSalleh\FilamentShield\Traits\HasPanelShield;
 use Filament\Models\Contracts\FilamentUser;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -27,6 +28,7 @@ class User extends Authenticatable implements FilamentUser
         'gender',
         'email',
         'password',
+        'regency_code',
     ];
 
     /**
@@ -65,5 +67,10 @@ class User extends Authenticatable implements FilamentUser
     public function syncLogs(): HasMany
     {
         return $this->hasMany(SyncLog::class, 'synced_by');
+    }
+
+    public function regency(): BelongsTo
+    {
+        return $this->belongsTo(Regency::class, 'regency_code', 'code');
     }
 }
