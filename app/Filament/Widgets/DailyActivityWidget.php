@@ -4,23 +4,27 @@ namespace App\Filament\Widgets;
 
 use App\Models\RamadhanPeriod;
 use App\Models\UserActivity;
-use Filament\Widgets\ChartWidget;
+use Filament\Widgets\Widget;
 use Illuminate\Support\Facades\Auth;
 
-class DailyActivityWidget extends ChartWidget
+class DailyActivityWidget extends Widget
 {
     protected static ?int $sort = 4;
 
-    protected ?string $heading = 'Aktivitas Per Hari';
+    protected string $view = 'filament.widgets.daily-activity-widget';
 
     protected int|string|array $columnSpan = 1;
 
-    protected function getType(): string
+    public array $chartData = [];
+
+    public array $chartLabels = [];
+
+    public function mount(): void
     {
-        return 'bar';
+        $this->loadData();
     }
 
-    protected function getData(): array
+    private function loadData(): void
     {
         $userId = Auth::id();
         $today = now()->toDateString();
@@ -32,16 +36,7 @@ class DailyActivityWidget extends ChartWidget
             ->first();
 
         if (! $period) {
-            return [
-                'datasets' => [
-                    [
-                        'label' => 'Tidak ada data',
-                        'data' => [],
-                        'backgroundColor' => 'rgba(245, 158, 11, 0.6)',
-                    ],
-                ],
-                'labels' => [],
-            ];
+            return;
         }
 
         $startDate = $period->start_date;
@@ -61,43 +56,12 @@ class DailyActivityWidget extends ChartWidget
         while ($current->lte($endDate)) {
             $dateString = $current->toDateString();
             $dayNum = $startDate->diffInDays($current) + 1;
-            $labels[] = "H-{$dayNum}";
+            $labels[] = 'H-'.$dayNum;
             $data[] = $activities->get($dateString)?->count() ?? 0;
             $current->addDay();
         }
 
-        return [
-            'datasets' => [
-                [
-                    'label' => 'Aktivitas Selesai',
-                    'data' => $data,
-                    'backgroundColor' => 'rgba(245, 158, 11, 0.7)',
-                    'borderColor' => 'rgba(245, 158, 11, 1)',
-                    'borderWidth' => 1,
-                    'borderRadius' => 4,
-                ],
-            ],
-            'labels' => $labels,
-        ];
-    }
-
-    protected function getOptions(): array
-    {
-        return [
-            'plugins' => [
-                'legend' => [
-                    'display' => false,
-                ],
-            ],
-            'scales' => [
-                'y' => [
-                    'beginAtZero' => true,
-                    'ticks' => [
-                        'stepSize' => 1,
-                    ],
-                ],
-            ],
-            'maintainAspectRatio' => false,
-        ];
+        $this->chartData = $data;
+        $this->chartLabels = $labels;
     }
 }

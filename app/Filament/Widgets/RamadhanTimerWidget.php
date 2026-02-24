@@ -21,6 +21,8 @@ class RamadhanTimerWidget extends Widget
 
     public ?string $ramadhanDay = null;
 
+    public ?int $maghribTimestamp = null;
+
     public function mount(): void
     {
         $this->loadPrayerData();
@@ -55,6 +57,10 @@ class RamadhanTimerWidget extends Widget
                 'maghrib' => $prayer->maghrib,
                 'isya' => $prayer->isya,
             ];
+            $this->maghribTimestamp = now()->startOfDay()
+                ->addHours((int) substr($prayer->maghrib, 0, 2))
+                ->addMinutes((int) substr($prayer->maghrib, 3, 2))
+                ->timestamp;
         }
     }
 

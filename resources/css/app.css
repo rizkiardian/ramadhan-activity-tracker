@@ -22,3 +22,16 @@
     --color-primary-900: #14532d;
     --color-primary-950: #052e16;
 }
+
+@layer base {
+    a[href],
+    button,
+    [type="submit"],
+    [type="button"],
+    [type="reset"],
+    [role="button"],
+    label[for],
+    .cursor-pointer {
+        cursor: pointer;
+    }
+}

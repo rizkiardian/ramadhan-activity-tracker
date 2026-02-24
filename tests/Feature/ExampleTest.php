@@ -1,19 +1,26 @@
 <?php
 
-namespace Tests\Feature;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Spatie\Permission\Models\Role;
 
-// use Illuminate\Foundation\Testing\RefreshDatabase;
-use Tests\TestCase;
+uses(RefreshDatabase::class);
 
-class ExampleTest extends TestCase
-{
-    /**
-     * A basic test example.
-     */
-    public function test_the_application_returns_a_successful_response(): void
-    {
-        $response = $this->get('/');
+beforeEach(function (): void {
+    Role::create(['name' => 'super_admin', 'guard_name' => 'web']);
+    Role::create(['name' => 'user', 'guard_name' => 'web']);
+});
 
-        $response->assertStatus(200);
-    }
-}
+it('redirects unauthenticated users from dashboard to login', function (): void {
+    $this->get('/')->assertRedirectToRoute('filament.app.auth.login');
+});
+
+it('shows the login page successfully', function (): void {
+    $this->get('/login')->assertOk();
+});
+
+it('allows super_admin to access the dashboard', function (): void {
+    $admin = \App\Models\User::factory()->create();
+    $admin->assignRole('super_admin');
+
+    $this->actingAs($admin)->get('/')->assertOk();
+});

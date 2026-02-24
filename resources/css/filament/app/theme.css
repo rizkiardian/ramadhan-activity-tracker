@@ -1,0 +1,73 @@
+@import url("https://fonts.bunny.net/css?family=instrument-sans:400,500,600,700&display=swap");
+
+:root {
+    --font-family-sans:
+        "Instrument Sans", ui-sans-serif, system-ui, sans-serif,
+        "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol",
+        "Noto Color Emoji";
+}
+
+/* ── Cursor pointer on all interactive elements ─────────────────────────── */
+a[href],
+button,
+[role="button"],
+[type="submit"],
+[type="button"],
+[type="reset"],
+label[for],
+select,
+summary,
+.fi-btn,
+.fi-ta-record-action {
+    cursor: pointer !important;
+}
+
+/* ── Sidebar scrollbar ────────────────────────────────────────────────────── */
+.fi-sidebar-nav {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.15) transparent;
+}
+.fi-sidebar-nav::-webkit-scrollbar {
+    width: 4px;
+}
+.fi-sidebar-nav::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 4px;
+}
+
+/* ── Stat cards slightly elevated ─────────────────────────────────────────── */
+.fi-wi-stats-overview-stat {
+    border-radius: 0.875rem !important;
+    box-shadow:
+        0 1px 3px 0 rgb(0 0 0 / 0.06),
+        0 1px 2px -1px rgb(0 0 0 / 0.04) !important;
+}
+
+/* ── Table row hover ─────────────────────────────────────────────────────── */
+.fi-ta-row:hover {
+    background-color: rgb(var(--color-primary-50) / 0.5) !important;
+}
+
+/* ── Smooth focus ring on primary color ──────────────────────────────────── */
+.fi-input:focus,
+.fi-select:focus {
+    --tw-ring-color: rgb(var(--color-primary-500) / 0.4) !important;
+}
+
+/* ── Dashboard/widget section cards ─────────────────────────────────────── */
+.fi-section {
+    border-radius: 0.875rem !important;
+}
+.fi-wi-chart {
+    border-radius: 0.875rem !important;
+}
+
+/* ── Sidebar brand area ──────────────────────────────────────────────────── */
+.fi-sidebar-header {
+    padding-block: 1.25rem !important;
+}
+
+/* ── Topbar shadow ───────────────────────────────────────────────────────── */
+.fi-topbar {
+    box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.06) !important;
+}
