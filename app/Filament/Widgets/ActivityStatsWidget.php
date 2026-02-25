@@ -8,6 +8,7 @@ use BezhanSalleh\FilamentShield\Traits\HasWidgetShield;
 use Filament\Widgets\StatsOverviewWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
 use Illuminate\Support\Facades\Auth;
+use Livewire\Attributes\Reactive;
 
 class ActivityStatsWidget extends StatsOverviewWidget
 {
@@ -15,9 +16,14 @@ class ActivityStatsWidget extends StatsOverviewWidget
 
     protected static ?int $sort = 2;
 
+    #[Reactive]
+    public ?array $pageFilters = null;
+
     protected function getStats(): array
     {
-        $userId = Auth::id();
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        $isAdmin = $user->hasRole('super_admin');
         $today = now()->toDateString();
 
         $period = RamadhanPeriod::query()
@@ -26,7 +32,11 @@ class ActivityStatsWidget extends StatsOverviewWidget
             ->where('end_date', '>=', $today)
             ->first();
 
-        if (! $period) {
+        $filterFrom = $this->pageFilters['date_from'] ?? null;
+        $filterTo = $this->pageFilters['date_to'] ?? null;
+        $hasCustomFilter = $filterFrom || $filterTo;
+
+        if (! $hasCustomFilter && ! $period) {
             return [
                 Stat::make('Status', 'Di luar Ramadhan')
                     ->description('Data akan tampil selama Ramadhan berlangsung')
@@ -35,68 +45,66 @@ class ActivityStatsWidget extends StatsOverviewWidget
             ];
         }
 
-        $startDate = $period->start_date->toDateString();
-        $endDate = $period->end_date->toDateString();
-        $totalDays = (int) $period->start_date->diffInDays($period->end_date) + 1;
-        $daysPassed = (int) min((int) $period->start_date->diffInDays(now()) + 1, $totalDays);
+        $startDate = $filterFrom ?? $period?->start_date->toDateString() ?? now()->startOfMonth()->toDateString();
+        $endDate = $filterTo ?? $period?->end_date->toDateString() ?? $today;
 
+        $baseQuery = fn() => UserActivity::query()
+            ->when(! $isAdmin, fn($q) => $q->where('user_id', $user->id));
 
-        $totalActivitiesInDay = UserActivity::query()
-            ->where('user_id', $userId)
-            ->where('date', $today)
-            ->count();
+        $todayPlanned = $baseQuery()->where('date', $today)->count();
+        $todayDone = $baseQuery()->where('date', $today)->where('status', 'Done')->count();
+        $totalInRange = $baseQuery()->whereBetween('date', [$startDate, $endDate])->count();
+        $doneInRange = $baseQuery()->whereBetween('date', [$startDate, $endDate])->where('status', 'Done')->count();
+        $skippedInRange = $baseQuery()->whereBetween('date', [$startDate, $endDate])->where('status', 'Skipped')->count();
 
-        $totalActivities = UserActivity::query()
-            ->where('user_id', $userId)
-            ->whereBetween('date', [$startDate, $endDate])
-            ->count();
+        $completionRate = $totalInRange > 0 ? round(($doneInRange / $totalInRange) * 100) : 0;
 
-        $doneActivities = UserActivity::query()
-            ->where('user_id', $userId)
-            ->where('status', 'Done')
-            ->whereBetween('date', [$startDate, $endDate])
-            ->count();
-
-        $todayCount = UserActivity::query()
-            ->where('user_id', $userId)
-            ->where('date', $today)
-            ->where('status', 'Done')
-            ->count();
-
-        $skippedCount = UserActivity::query()
-            ->where('user_id', $userId)
-            ->where('status', 'Skipped')
-            ->whereBetween('date', [$startDate, $endDate])
-            ->count();
-
-        $completionRate = $totalActivities > 0
-            ? round(($doneActivities / $totalActivities) * 100)
-            : 0;
-
-        return [
-            Stat::make('Aktivitas Selesai Hari Ini', $todayCount)
-                ->description("Dari {$totalActivitiesInDay} yang direncanakan")
+        $stats = [
+            Stat::make('Aktivitas Selesai Hari Ini', $todayDone)
+                ->description($isAdmin
+                    ? "Total semua pengguna dari {$todayPlanned} rencana"
+                    : "Dari {$todayPlanned} yang direncanakan")
                 ->descriptionIcon('heroicon-o-calendar-days')
                 ->icon('heroicon-o-star')
                 ->color('success'),
 
-            Stat::make('Total Aktivitas Selesai', "{$doneActivities} / {$totalActivities}")
+            Stat::make('Total Aktivitas Selesai', "{$doneInRange} / {$totalInRange}")
                 ->description("Tingkat penyelesaian: {$completionRate}%")
                 ->descriptionIcon('heroicon-o-check-circle')
                 ->icon('heroicon-o-clipboard-document-check')
                 ->color('primary'),
 
-            Stat::make('Aktivitas Dilewati', $skippedCount)
-                ->description('Selama bulan Ramadhan ini')
+            Stat::make('Aktivitas Dilewati', $skippedInRange)
+                ->description($isAdmin ? 'Seluruh pengguna pada periode ini' : 'Selama periode ini')
                 ->descriptionIcon('heroicon-o-x-circle')
                 ->icon('heroicon-o-arrow-path-rounded-square')
-                ->color($skippedCount > 0 ? 'warning' : 'success'),
+                ->color($skippedInRange > 0 ? 'warning' : 'success'),
+        ];
 
-            Stat::make('Hari Ramadhan', "{$daysPassed} / {$totalDays}")
+        if ($period && ! $hasCustomFilter) {
+            $totalDays = (int) $period->start_date->diffInDays($period->end_date) + 1;
+            $daysPassed = (int) min((int) $period->start_date->diffInDays(now()) + 1, $totalDays);
+
+            $stats[] = Stat::make('Hari Ramadhan', "{$daysPassed} / {$totalDays}")
                 ->description("{$period->hijri_year}")
                 ->descriptionIcon('heroicon-o-moon')
                 ->icon('heroicon-o-moon')
-                ->color('warning'),
-        ];
+                ->color('warning');
+        }
+
+        if ($isAdmin) {
+            $activeUsers = UserActivity::query()
+                ->whereBetween('date', [$startDate, $endDate])
+                ->distinct('user_id')
+                ->count('user_id');
+
+            $stats[] = Stat::make('Pengguna Aktif', $activeUsers)
+                ->description('Pengguna dengan aktivitas di periode ini')
+                ->descriptionIcon('heroicon-o-users')
+                ->icon('heroicon-o-users')
+                ->color('info');
+        }
+
+        return $stats;
     }
 }

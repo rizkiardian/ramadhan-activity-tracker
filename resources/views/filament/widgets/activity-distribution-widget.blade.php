@@ -1,7 +1,9 @@
 <x-filament-widgets::widget class="fi-wi-activity-distribution">
   <x-filament::section>
     <x-slot name="heading">Distribusi Aktivitas</x-slot>
-    <x-slot name="description">Berdasarkan jenis ibadah selama Ramadhan</x-slot>
+    <x-slot name="description">
+      {{ $isAdmin ? 'Berdasarkan jenis ibadah semua pengguna' : 'Berdasarkan jenis ibadah selama Ramadhan' }}
+    </x-slot>
 
     @if (count($chartData) > 0)
       <div class="relative" style="height: 220px;" x-data="{
@@ -19,8 +21,10 @@
               }
               const canvas = this.$el.querySelector('canvas');
               if (!canvas) return;
-              if (this.chart) { this.chart.destroy();
-                  this.chart = null; }
+              if (this.chart) {
+                  this.chart.destroy();
+                  this.chart = null;
+              }
               const isDark = document.documentElement.classList.contains('dark');
               this.chart = new window.Chart(canvas, {
                   type: 'doughnut',

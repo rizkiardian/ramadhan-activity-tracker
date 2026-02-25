@@ -1,7 +1,9 @@
 <x-filament-widgets::widget class="fi-wi-daily-activity">
   <x-filament::section>
     <x-slot name="heading">Aktivitas Per Hari</x-slot>
-    <x-slot name="description">Jumlah ibadah selesai tiap hari Ramadhan</x-slot>
+    <x-slot name="description">
+      {{ $isAdmin ? 'Jumlah ibadah selesai tiap hari (semua pengguna)' : 'Jumlah ibadah selesai tiap hari Ramadhan' }}
+    </x-slot>
 
     @if (count($chartData) > 0)
       <div class="relative" style="height: 220px;" x-data="{
@@ -18,8 +20,10 @@
               }
               const canvas = this.$el.querySelector('canvas');
               if (!canvas) return;
-              if (this.chart) { this.chart.destroy();
-                  this.chart = null; }
+              if (this.chart) {
+                  this.chart.destroy();
+                  this.chart = null;
+              }
               const isDark = document.documentElement.classList.contains('dark');
               const gridColor = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)';
               const tickColor = isDark ? '#9ca3af' : '#6b7280';

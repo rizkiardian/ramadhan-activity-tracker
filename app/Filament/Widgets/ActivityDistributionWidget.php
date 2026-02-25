@@ -7,61 +7,81 @@ use App\Models\UserActivity;
 use BezhanSalleh\FilamentShield\Traits\HasWidgetShield;
 use Filament\Widgets\Widget;
 use Illuminate\Support\Facades\Auth;
+use Livewire\Attributes\Reactive;
 
 class ActivityDistributionWidget extends Widget
 {
     use HasWidgetShield;
-    
+
     protected static ?int $sort = 3;
 
     protected string $view = 'filament.widgets.activity-distribution-widget';
 
     protected int|string|array $columnSpan = 1;
 
-    /** @var list<int> */
-    public array $chartData = [];
+    #[Reactive]
+    public ?array $pageFilters = null;
 
-    /** @var list<string> */
-    public array $chartLabels = [];
-
-    /** @var list<string> */
-    public array $chartColors = [];
-
-    public function mount(): void
+    /**
+     * @return array<string, mixed>
+     */
+    protected function getViewData(): array
     {
-        $this->loadData();
+        [$chartData, $chartLabels, $chartColors] = $this->computeChartData();
+
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+
+        return [
+            'chartData' => $chartData,
+            'chartLabels' => $chartLabels,
+            'chartColors' => $chartColors,
+            'isAdmin' => $user->hasRole('super_admin'),
+        ];
     }
 
-    private function loadData(): void
+    /**
+     * @return array{list<int>, list<string>, list<string>}
+     */
+    private function computeChartData(): array
     {
-        $userId = Auth::id();
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        $isAdmin = $user->hasRole('super_admin');
         $today = now()->toDateString();
 
-        $period = RamadhanPeriod::query()
-            ->whereNull('deleted_at')
-            ->where('start_date', '<=', $today)
-            ->where('end_date', '>=', $today)
-            ->first();
+        $filterFrom = $this->pageFilters['date_from'] ?? null;
+        $filterTo = $this->pageFilters['date_to'] ?? null;
 
-        if (! $period) {
-            return;
+        if (! $filterFrom || ! $filterTo) {
+            $period = RamadhanPeriod::query()
+                ->whereNull('deleted_at')
+                ->where('start_date', '<=', $today)
+                ->where('end_date', '>=', $today)
+                ->first();
+
+            if (! $period && ! $filterFrom) {
+                return [[], [], []];
+            }
+
+            $filterFrom ??= $period?->start_date->toDateString() ?? now()->startOfMonth()->toDateString();
+            $filterTo ??= $period?->end_date->toDateString() ?? $today;
         }
-
-        $startDate = $period->start_date->toDateString();
-        $endDate = $period->end_date->toDateString();
-
-        $data = UserActivity::query()
-            ->where('user_id', $userId)
-            ->whereBetween('date', [$startDate, $endDate])
-            ->with('activityType')
-            ->get()
-            ->groupBy('activityType.name')
-            ->map(fn ($activities) => $activities->count());
 
         $palette = ['#10b981', '#3b82f6', '#f59e0b', '#8b5cf6', '#ef4444', '#06b6d4', '#84cc16', '#f97316'];
 
-        $this->chartData = $data->values()->toArray();
-        $this->chartLabels = $data->keys()->toArray();
-        $this->chartColors = array_slice($palette, 0, $data->count());
+        $data = UserActivity::query()
+            ->when(! $isAdmin, fn($q) => $q->where('user_id', $user->id))
+            ->whereBetween('date', [$filterFrom, $filterTo])
+            ->with('activityType')
+            ->get()
+            ->groupBy('activityType.name')
+            ->map(fn($activities) => $activities->count());
+
+        return [
+            $data->values()->toArray(),
+            $data->keys()->toArray(),
+            array_slice($palette, 0, $data->count()),
+        ];
     }
 }
