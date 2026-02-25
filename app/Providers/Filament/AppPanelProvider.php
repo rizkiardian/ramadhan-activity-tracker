@@ -2,6 +2,7 @@
 
 namespace App\Providers\Filament;
 
+use App\Filament\Pages\Auth\Login;
 use App\Filament\Widgets\ActivityDistributionWidget;
 use App\Filament\Widgets\ActivityStatsWidget;
 use App\Filament\Widgets\DailyActivityWidget;
@@ -29,7 +30,7 @@ class AppPanelProvider extends PanelProvider
             ->default()
             ->id('app')
             ->path('')
-            ->login()
+            ->login(Login::class)
             ->colors([
                 'primary' => Color::Green,
             ])
