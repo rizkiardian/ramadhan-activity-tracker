@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\UserActivities\Tables;
 
+use App\Models\RamadhanPeriod;
 use Filament\Actions\ActionGroup;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
@@ -12,7 +13,9 @@ use Filament\Actions\ForceDeleteBulkAction;
 use Filament\Actions\RestoreAction;
 use Filament\Actions\RestoreBulkAction;
 use Filament\Actions\ViewAction;
+use Filament\Forms\Components\DatePicker;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
@@ -71,6 +74,34 @@ class UserActivitiesTable
                     ->placeholder('-'),
             ])
             ->filters([
+                Filter::make('date')
+                    ->label('Tanggal')
+                    ->schema([
+                        DatePicker::make('date_from')
+                            ->label('Dari')
+                            ->date()
+                            ->placeholder('Tanggal mulai')
+                            ->native(false)
+                            ->live()
+                            ->minDate(fn($get) => RamadhanPeriod::current()?->start_date)
+                            ->maxDate(fn($get) => $get('date_to') ?: RamadhanPeriod::current()?->end_date),
+                        DatePicker::make('date_to')
+                            ->label('Sampai')
+                            ->date()
+                            ->placeholder('Tanggal akhir')
+                            ->native(false)
+                            ->live()
+                            ->minDate(fn($get) => $get('date_from') ?: RamadhanPeriod::current()?->start_date)
+                            ->maxDate(fn($get) => RamadhanPeriod::current()?->end_date),
+                    ])
+                    ->query(function ($query, $data) {
+                        if ($data['date_from']) {
+                            $query->whereDate('date', '>=', $data['date_from']);
+                        }
+                        if ($data['date_to']) {
+                            $query->whereDate('date', '<=', $data['date_to']);
+                        }
+                    }),
                 SelectFilter::make('status')
                     ->label('Status')
                     ->options([
@@ -87,13 +118,15 @@ class UserActivitiesTable
                     ->label('Pengguna')
                     ->relationship('user', 'name')
                     ->searchable()
-                    ->preload(),
+                    ->preload()
+                    ->visible(fn() => auth()->user()->hasRole('super_admin')),
                 TrashedFilter::make(),
             ])
             ->recordActions([
                 ActionGroup::make([
                     ViewAction::make(),
-                    EditAction::make(),
+                    EditAction::make()
+                        ->visible(fn($record): bool => $record->user_id === auth()->id()),
                     DeleteAction::make(),
                     ForceDeleteAction::make(),
                     RestoreAction::make(),
@@ -106,7 +139,6 @@ class UserActivitiesTable
                     RestoreBulkAction::make(),
                 ]),
             ])
-            ->recordUrl(null)
             ->defaultSort('created_at', 'desc')
             ->emptyStateIcon('heroicon-o-clipboard-document-list')
             ->emptyStateHeading('Belum Ada Aktivitas')

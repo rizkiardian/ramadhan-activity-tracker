@@ -64,4 +64,9 @@ class RamadhanPeriod extends Model
     {
         return $this->hasMany(PrayerTime::class, 'year', 'year');
     }
+
+    public function scopeCurrent($query)
+    {
+        return $query->where('year', now()->year)->first();
+    }
 }

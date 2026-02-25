@@ -8,10 +8,10 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TimePicker;
 use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
 use Illuminate\Support\Carbon;
-use Filament\Schemas\Components\Utilities\Set;
-use Filament\Schemas\Components\Utilities\Get;
 
 class UserActivityForm
 {
@@ -19,37 +19,50 @@ class UserActivityForm
     {
         return $schema
             ->components([
-                Section::make('Detail Aktivitas')
+                Section::make('Informasi Aktivitas')
+                    ->description('Pilih pengguna dan jenis kegiatan Ramadhan.')
+                    ->icon('heroicon-o-clipboard-document-list')
                     ->columns(2)
                     ->schema([
                         Select::make('user_id')
                             ->label('Pengguna')
                             ->relationship('user', 'name')
-                            ->default(fn() => auth()->id())
+                            ->default(fn () => auth()->id())
                             ->disabled()
                             ->dehydrated()
-                            ->required(),
+                            ->required()
+                            ->prefixIcon('heroicon-o-user'),
                         Select::make('activity_type_id')
                             ->label('Jenis Aktivitas')
                             ->relationship('activityType', 'name')
                             ->required()
                             ->searchable()
-                            ->preload(),
-                        // 1. Field Pilih Periode (Select)
+                            ->preload()
+                            ->prefixIcon('heroicon-o-tag'),
+                    ]),
+
+                Section::make('Waktu & Hari Ramadhan')
+                    ->description('Tentukan tanggal dan waktu pelaksanaan aktivitas.')
+                    ->icon('heroicon-o-calendar-days')
+                    ->columns(2)
+                    ->schema([
                         Select::make('ramadhan_day')
-                            ->label('Periode Ramadhan')
+                            ->label('Hari Ramadhan')
                             ->required()
                             ->options(function (Get $get) {
                                 $year = $get('date')
                                     ? Carbon::parse($get('date'))->year
                                     : now()->year;
                                 $period = RamadhanPeriod::where('year', $year)->first();
-                                if (!$period) return [];
+                                if (! $period) {
+                                    return [];
+                                }
                                 $start = Carbon::parse($period->start_date);
                                 $end = Carbon::parse($period->end_date);
                                 $totalDays = $start->diffInDays($end) + 1;
+
                                 return collect(range(1, $totalDays))
-                                    ->mapWithKeys(fn($i) => [$i => "Hari ke-{$i} Ramadhan"])
+                                    ->mapWithKeys(fn ($i) => [$i => "Hari ke-{$i} Ramadhan"])
                                     ->toArray();
                             })
                             ->live()
@@ -57,31 +70,54 @@ class UserActivityForm
                                 $period = RamadhanPeriod::where('year', now()->year)->first();
                                 if ($period && $state) {
                                     $date = Carbon::parse($period->start_date)
-                                        ->addDays((int)$state - 1)
+                                        ->addDays((int) $state - 1)
                                         ->format('Y-m-d');
                                     $set('date', $date);
                                 }
                             })
                             ->afterStateHydrated(function ($state, Set $set, Get $get) {
                                 $recordDate = $get('date');
-                                if (!$recordDate) return;
+                                if (! $recordDate) {
+                                    return;
+                                }
                                 $date = Carbon::parse($recordDate);
                                 $year = $date->year;
                                 $period = RamadhanPeriod::where('year', $year)->first();
-                                if (!$period) return;
+                                if (! $period) {
+                                    return;
+                                }
                                 $start = Carbon::parse($period->start_date);
-                                // mapping: tanggal → hari ke berapa
                                 $ramadhanDay = $start->diffInDays($date) + 2;
                                 $set('ramadhan_day', $ramadhanDay);
-                            }),
+                            })
+                            ->prefixIcon('heroicon-o-moon'),
+
                         DatePicker::make('date')
                             ->label('Tanggal')
                             ->required()
                             ->native(false)
                             ->displayFormat('d M Y')
-                            ->readonly(),
+                            ->readonly()
+                            ->prefixIcon('heroicon-o-calendar'),
+
+                        TimePicker::make('start_time')
+                            ->label('Waktu Mulai')
+                            ->required()
+                            ->seconds(false)
+                            ->prefixIcon('heroicon-o-clock'),
+
+                        TimePicker::make('end_time')
+                            ->label('Waktu Selesai')
+                            ->seconds(false)
+                            ->prefixIcon('heroicon-o-clock'),
+                    ]),
+
+                Section::make('Status & Catatan')
+                    ->description('Tandai status kegiatan dan tambahkan catatan jika diperlukan.')
+                    ->icon('heroicon-o-pencil-square')
+                    ->schema([
                         Select::make('status')
-                            ->label('Status')
+                            ->label('Status Kegiatan')
                             ->options([
                                 'Pending' => 'Pending',
                                 'Done' => 'Selesai',
@@ -89,18 +125,13 @@ class UserActivityForm
                             ])
                             ->default('Pending')
                             ->required()
-                            ->native(false),
-                        TimePicker::make('start_time')
-                            ->label('Waktu Mulai')
-                            ->required()
-                            ->seconds(false),
-                        TimePicker::make('end_time')
-                            ->label('Waktu Selesai')
-                            ->seconds(false),
+                            ->native(false)
+                            ->prefixIcon('heroicon-o-check-circle'),
                         Textarea::make('notes')
                             ->label('Catatan')
                             ->columnSpanFull()
-                            ->rows(3),
+                            ->rows(4)
+                            ->placeholder('Tulis catatan atau refleksi kegiatan di sini...'),
                     ]),
             ]);
     }
