@@ -10,9 +10,9 @@ class EditRegency extends EditRecord
 {
     protected static string $resource = RegencyResource::class;
 
-        protected function getRedirectUrl(): string
+    protected function getRedirectUrl(): string
     {
-        return $this->getResource()::getUrl('view', ['record' => $this->getRecord()]);
+        return $this->getResource()::getUrl('index');
     }
 
     protected function getHeaderActions(): array

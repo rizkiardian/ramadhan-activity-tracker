@@ -20,14 +20,17 @@ class ActivityTypeForm
                         TextInput::make('name')
                             ->label('Nama Aktivitas')
                             ->required()
-                            ->maxLength(255),
-                        Select::make('created_by')
-                            ->label('Dibuat Oleh')
-                            ->relationship('createdBy', 'name')
-                            ->default(fn () => Auth::id())
-                            ->required()
-                            ->searchable()
-                            ->preload(),
+                            ->maxLength(255)
+                            ->columnSpanFull(),
+                        // Select::make('created_by')
+                        //     ->label('Dibuat Oleh')
+                        //     ->relationship('createdBy', 'name')
+                        //     ->default(fn() => Auth::id())
+                        //     ->disabled()
+                        //     ->dehydrated()
+                        //     ->required()
+                        //     ->searchable()
+                        //     ->preload(),
                     ]),
             ]);
     }

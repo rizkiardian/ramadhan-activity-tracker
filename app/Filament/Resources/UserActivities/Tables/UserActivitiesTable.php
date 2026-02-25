@@ -139,6 +139,7 @@ class UserActivitiesTable
                     RestoreBulkAction::make(),
                 ]),
             ])
+            ->recordUrl(null)
             ->defaultSort('created_at', 'desc')
             ->emptyStateIcon('heroicon-o-clipboard-document-list')
             ->emptyStateHeading('Belum Ada Aktivitas')

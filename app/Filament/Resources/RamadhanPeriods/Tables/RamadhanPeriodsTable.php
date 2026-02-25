@@ -3,10 +3,14 @@
 namespace App\Filament\Resources\RamadhanPeriods\Tables;
 
 use App\Models\RamadhanPeriod;
+use Filament\Actions\ActionGroup;
 use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
+use Filament\Actions\ForceDeleteAction;
 use Filament\Actions\ForceDeleteBulkAction;
+use Filament\Actions\RestoreAction;
 use Filament\Actions\RestoreBulkAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\TrashedFilter;
@@ -76,12 +80,16 @@ class RamadhanPeriodsTable
           ->sortable()
           ->toggleable(isToggledHiddenByDefault: true),
       ])
-      ->defaultSort('year', 'desc')
       ->filters([
         TrashedFilter::make(),
       ])
       ->recordActions([
-        EditAction::make(),
+        ActionGroup::make([
+          EditAction::make(),
+          DeleteAction::make(),
+          ForceDeleteAction::make(),
+          RestoreAction::make(),
+        ])->tooltip(__('Actions')),
       ])
       ->toolbarActions([
         BulkActionGroup::make([
@@ -89,6 +97,11 @@ class RamadhanPeriodsTable
           ForceDeleteBulkAction::make(),
           RestoreBulkAction::make(),
         ]),
-      ]);
+      ])
+      ->recordUrl(null)
+      ->defaultSort('created_at', 'desc')
+      ->emptyStateIcon('heroicon-o-calendar')
+      ->emptyStateHeading('Belum Ada Periode Ramadhan')
+      ->emptyStateDescription('Tambahkan periode Ramadhan terlebih dahulu untuk mulai merekam kegiatan Ramadhan.');
   }
 }

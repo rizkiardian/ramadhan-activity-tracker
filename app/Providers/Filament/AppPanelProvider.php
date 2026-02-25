@@ -61,6 +61,7 @@ class AppPanelProvider extends PanelProvider
             ->authMiddleware([
                 Authenticate::class,
             ])
-            ->plugin(FilamentShieldPlugin::make());
+            ->plugin(FilamentShieldPlugin::make())
+            ->brandName('Ramadhan Activity Tracker');
     }
 }

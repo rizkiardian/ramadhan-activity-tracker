@@ -8,4 +8,9 @@ use Filament\Resources\Pages\CreateRecord;
 class CreateRamadhanPeriod extends CreateRecord
 {
     protected static string $resource = RamadhanPeriodResource::class;
+
+    protected function getRedirectUrl(): string
+    {
+        return $this->getResource()::getUrl('index');
+    }
 }

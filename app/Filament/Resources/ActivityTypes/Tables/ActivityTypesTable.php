@@ -2,10 +2,14 @@
 
 namespace App\Filament\Resources\ActivityTypes\Tables;
 
+use Filament\Actions\ActionGroup;
 use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
+use Filament\Actions\ForceDeleteAction;
 use Filament\Actions\ForceDeleteBulkAction;
+use Filament\Actions\RestoreAction;
 use Filament\Actions\RestoreBulkAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\TrashedFilter;
@@ -41,12 +45,16 @@ class ActivityTypesTable
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
-            ->defaultSort('name')
             ->filters([
                 TrashedFilter::make(),
             ])
             ->recordActions([
-                EditAction::make(),
+                ActionGroup::make([
+                    EditAction::make(),
+                    DeleteAction::make(),
+                    ForceDeleteAction::make(),
+                    RestoreAction::make(),
+                ])->tooltip(__('Actions')),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
@@ -55,6 +63,8 @@ class ActivityTypesTable
                     RestoreBulkAction::make(),
                 ]),
             ])
+            ->recordUrl(null)
+            ->defaultSort('created_at', 'desc')
             ->emptyStateIcon('heroicon-o-tag')
             ->emptyStateHeading('Belum Ada Jenis Aktivitas')
             ->emptyStateDescription('Tambahkan jenis aktivitas terlebih dahulu untuk mulai merekam kegiatan Ramadhan.');

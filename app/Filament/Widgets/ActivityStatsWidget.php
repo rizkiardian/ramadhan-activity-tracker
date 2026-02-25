@@ -40,6 +40,12 @@ class ActivityStatsWidget extends StatsOverviewWidget
         $totalDays = (int) $period->start_date->diffInDays($period->end_date) + 1;
         $daysPassed = (int) min((int) $period->start_date->diffInDays(now()) + 1, $totalDays);
 
+
+        $totalActivitiesInDay = UserActivity::query()
+            ->where('user_id', $userId)
+            ->where('date', $today)
+            ->count();
+
         $totalActivities = UserActivity::query()
             ->where('user_id', $userId)
             ->whereBetween('date', [$startDate, $endDate])
@@ -68,8 +74,8 @@ class ActivityStatsWidget extends StatsOverviewWidget
             : 0;
 
         return [
-            Stat::make('Aktivitas Hari Ini', $todayCount)
-                ->description("Ramadhan Hari ke-{$daysPassed}")
+            Stat::make('Aktivitas Selesai Hari Ini', $todayCount)
+                ->description("Dari {$totalActivitiesInDay} yang direncanakan")
                 ->descriptionIcon('heroicon-o-calendar-days')
                 ->icon('heroicon-o-star')
                 ->color('success'),

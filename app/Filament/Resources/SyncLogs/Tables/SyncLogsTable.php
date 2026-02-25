@@ -3,10 +3,17 @@
 namespace App\Filament\Resources\SyncLogs\Tables;
 
 use App\Enums\SyncCategory;
+use Filament\Actions\ActionGroup;
 use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\ForceDeleteAction;
+use Filament\Actions\ForceDeleteBulkAction;
+use Filament\Actions\RestoreAction;
+use Filament\Actions\RestoreBulkAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
 
 class SyncLogsTable
@@ -18,19 +25,19 @@ class SyncLogsTable
                 TextColumn::make('sync_category')
                     ->label('Kategori Sinkronisasi')
                     ->badge()
-                    ->getStateUsing(fn ($record): string => $record->sync_category?->label() ?? '-')
-                    ->color(fn ($record): string => $record->sync_category?->color() ?? 'gray')
+                    ->getStateUsing(fn($record): string => $record->sync_category?->label() ?? '-')
+                    ->color(fn($record): string => $record->sync_category?->color() ?? 'gray')
                     ->sortable(),
                 TextColumn::make('status')
                     ->label('Status')
                     ->badge()
-                    ->color(fn (string $state): string => match ($state) {
+                    ->color(fn(string $state): string => match ($state) {
                         'Success' => 'success',
                         'Failed' => 'danger',
                         'Pending' => 'warning',
                         default => 'gray',
                     })
-                    ->formatStateUsing(fn (string $state): string => match ($state) {
+                    ->formatStateUsing(fn(string $state): string => match ($state) {
                         'Success' => 'Berhasil',
                         'Failed' => 'Gagal',
                         'Pending' => 'Menunggu',
@@ -72,10 +79,20 @@ class SyncLogsTable
                         'Failed' => 'Gagal',
                         'Pending' => 'Menunggu',
                     ]),
+                TrashedFilter::make(),
+            ])
+            ->recordActions([
+                ActionGroup::make([
+                    DeleteAction::make(),
+                    ForceDeleteAction::make(),
+                    RestoreAction::make(),
+                ])->tooltip(__('Actions')),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
                     DeleteBulkAction::make(),
+                    ForceDeleteBulkAction::make(),
+                    RestoreBulkAction::make(),
                 ]),
             ])
             ->emptyStateIcon('heroicon-o-arrow-path-rounded-square')
